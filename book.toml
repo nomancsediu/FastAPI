@@ -1,0 +1,12 @@
+[book]
+title = "FastAPI for Machine Learning"
+description = "Learning notes on deploying Machine Learning models using FastAPI. Documenting what I learn about building production-ready ML APIs from basic to advanced."
+authors = ["Based on CampusX YouTube Playlist"]
+language = "en"
+multilingual = false
+src = "src"
+
+[build]
+build-dir = "book"
+
+

@@ -1,0 +1,8 @@
+book/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+*.joblib
+*.pkl
+*.keras
