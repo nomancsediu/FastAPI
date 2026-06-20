@@ -4,38 +4,34 @@ In Chapter 3, we built a CRUD API using in-memory storage. Data disappeared when
 
 ## What Changes
 
-We will add these files to your existing `fastapi-crud/` project:
+We will modify these files in your existing `fastapi-crud/` project:
 
-| File | Purpose | New or Modified |
-|------|---------|----------------|
-| `database.py` | SQLAlchemy engine + session config | **New** |
-| `models.py` | SQLAlchemy ORM models (database tables) | **Modified** (was Pydantic-only) |
-| `schemas.py` | Pydantic request/response models | **New** (split from models.py) |
-| `crud.py` | Database read/write operations | **New** |
-| `main.py` | Updated to use database instead of in-memory | **Modified** |
-| `requirements.txt` | Updated with SQLAlchemy | **Modified** |
+| File | Purpose | Change |
+|------|---------|--------|
+| `database.py` | SQLAlchemy engine + session | **Replaced** (was in-memory list) |
+| `models.py` | SQLAlchemy table + Pydantic models | **Updated** (add ORM model) |
+| `main.py` | Use database instead of in-memory | **Updated** |
+| `requirements.txt` | + sqlalchemy | **Updated** |
 
 ## Current Project Structure
 
 ```
 fastapi-crud/
-├── main.py              # In-memory CRUD endpoints
-├── models.py            # Pydantic models only
-├── database.py          # In-memory data store (WILL BE REPLACED)
-├── requirements.txt     # fastapi, uvicorn, pydantic
+├── main.py              # 5 CRUD endpoints (in-memory)
+├── models.py            # Pydantic models (Item, ItemUpdate)
+├── database.py          # In-memory list functions (WILL BE REPLACED)
+├── requirements.txt     # fastapi, uvicorn
 ```
 
 ## After This Chapter
 
 ```
 fastapi-crud/
-├── main.py              # Updated: uses database instead of in-memory
-├── database.py          # SQLAlchemy engine + get_db() dependency
-├── models.py            # SQLAlchemy ORM models (database tables)
-├── schemas.py           # Pydantic models (API request/response)
-├── crud.py              # Database CRUD operations
-├── requirements.txt     # + sqlalchemy added
-├── app.db               # SQLite database (auto-created)
+├── main.py              # Updated: uses database sessions
+├── database.py          # SQLAlchemy engine + get_db()
+├── models.py            # SQLAlchemy ORM model + Pydantic models
+├── requirements.txt     # + sqlalchemy
+├── items.db             # SQLite database (auto-created)
 ```
 
 > **Key point:** We're evolving one project, not starting a new one. Every concept from Chapter 3 still applies — we're just replacing the storage layer.

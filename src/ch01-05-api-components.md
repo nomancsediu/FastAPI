@@ -18,4 +18,4 @@ The request body carries data sent by the client (used with POST, PUT, PATCH met
 
 ## Authentication
 
-APIs need authentication to control who can access them and what they can do. Common authentication methods include API keys (simple but less secure), JWT (JSON Web Tokens, stateless and scalable), OAuth 2.0 (delegated authorization, used by Google, GitHub, etc.), and HTTP Basic Auth (username/password, simple but not recommended for production). We will implement JWT authentication in the advanced concepts chapter.
+APIs need authentication to control who can access them and what they can do. Common authentication methods include API keys (simple but less secure), JWT (JSON Web Tokens, stateless and scalable), OAuth 2.0 (delegated authorization, used by Google, GitHub, etc.), and HTTP Basic Auth (username/password, simple but not recommended for production). We will implement JWT authentication in Chapter 6.

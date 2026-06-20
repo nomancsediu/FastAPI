@@ -18,7 +18,7 @@ gRPC is a high-performance RPC framework developed by Google that uses Protocol 
 
 ## WebSocket APIs
 
-WebSocket APIs provide full-duplex communication channels over a single TCP connection. Unlike traditional HTTP requests where the client initiates each interaction, WebSocket allows both the client and the server to send messages to each other at any time. This makes WebSocket ideal for real-time applications like chat applications, live sports scores, stock market tickers, and collaborative editing tools. FastAPI has first-class support for WebSockets, which we will explore in the advanced concepts chapter.
+WebSocket APIs provide full-duplex communication channels over a single TCP connection. Unlike traditional HTTP requests where the client initiates each interaction, WebSocket allows both the client and the server to send messages to each other at any time. This makes WebSocket ideal for real-time applications like chat applications, live sports scores, stock market tickers, and collaborative editing tools. FastAPI has first-class support for WebSockets.
 
 ```text
   +---------------+---------------+---------------+---------------+---------------+

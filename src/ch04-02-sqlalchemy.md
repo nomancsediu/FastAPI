@@ -80,24 +80,13 @@ Update `main.py` to use the database:
 ```python
 # main.py
 from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import engine, Base, get_db
-from models import ItemDB
+from models import ItemDB, Item, ItemUpdate
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-
-class Item(BaseModel):
-    name: str
-    price: float
-
-
-class ItemUpdate(BaseModel):
-    name: str | None = None
-    price: float | None = None
 
 
 @app.post("/items/", status_code=201)

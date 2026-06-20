@@ -1,36 +1,42 @@
 # Building APIs Using FastAPI
 
-This chapter is where you'll write your first real FastAPI code. Unlike the previous chapters (which were conceptual), here you'll build actual API projects step by step.
+In Chapter 2 you set up the `fastapi-crud/` project and wrote your first FastAPI
+endpoints. Now we'll turn that into a fully functional CRUD API.
 
-## What You Will Build
+## What You Already Have
 
-By the end of this chapter, you will have:
-
-1. **A CRUD API project** — a fully functional API that can Create, Read, Update, and Delete items, stored in memory.
-2. **Validation logic** — automatic input validation using Pydantic and FastAPI's built-in validators.
-3. **File upload endpoints** — endpoints that accept image uploads and form data (essential for ML APIs).
-4. **Async endpoints** — endpoints that handle I/O-bound operations without blocking the server.
-
-## Project Structure
-
-Throughout this chapter we will build toward this project layout:
+From Chapter 2, your `fastapi-crud/` project looks like this:
 
 ```
 fastapi-crud/
-├── main.py              # FastAPI application + routes
-├── models.py            # Pydantic models (schemas)
-├── database.py          # In-memory data store
-├── requirements.txt     # Python dependencies
+├── main.py           # GET /, GET /items/{id}, GET /search/
+├── requirements.txt  # fastapi, uvicorn
+└── venv/             # Virtual environment
 ```
 
-> **Note:** In this chapter we keep things simple with in-memory storage. Chapter 4 will upgrade this to a real database using SQLAlchemy.
+## What You Will Build in This Chapter
 
-## Prerequisites
+1. **Pydantic models** — define data structures in `models.py`
+2. **POST endpoints** — accept data from clients
+3. **Storage layer** — in-memory storage in `database.py`
+4. **Full CRUD** — Create, Read, Update, Delete
+5. **Validation** — automatic input checking
+6. **Async programming** — non-blocking endpoints
 
-Before starting, make sure you have completed [Chapter 2](../ch02-04-installing-fastapi.md) and have FastAPI and Uvicorn installed:
+## Final Project Structure
 
-```bash
-pip install fastapi uvicorn
+By the end of this chapter:
+
+```
+fastapi-crud/
+├── main.py           # 5 CRUD endpoints
+├── models.py         # Pydantic schemas (Item, ItemUpdate)
+├── database.py       # In-memory data store
+├── requirements.txt
+└── venv/
 ```
 
-Now let's begin building.
+> **Note:** In this chapter we use in-memory storage (data resets when the server
+> restarts). Chapter 4 will upgrade to a real SQLite database using SQLAlchemy.
+
+Let's begin. Open your `fastapi-crud/` folder from Chapter 2.

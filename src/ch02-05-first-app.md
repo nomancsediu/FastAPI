@@ -1,60 +1,102 @@
 # First App Using FastAPI
 
-## Hello World
+Let's write our first FastAPI app inside the `fastapi-crud/` project we created
+in the previous section. This same project will grow into a full CRUD API in
+Chapter 3.
 
-Create a file called `main.py` with the following content:
+## Step 1: Create main.py
+
+Inside `fastapi-crud/`, create `main.py`:
 
 ```python
 from fastapi import FastAPI
 
-app = FastAPI(title="My First API", version="1.0")
+app = FastAPI(title="CRUD API", version="1.0")
+
 
 @app.get("/")
-def read_root():
-    return {"message": "Hello, World!"}
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str = None):
-    return {"item_id": item_id, "q": q}
+def home():
+    return {"message": "Hello World"}
 ```
 
-Run it with:
+## Step 2: Run It
 
 ```bash
 uvicorn main:app --reload
 ```
 
-Now visit `http://127.0.0.1:8000/docs` to see the interactive Swagger UI documentation. You will see all your endpoints listed, with the ability to try them out directly from the browser.
+Open `http://127.0.0.1:8000` — you see `{"message": "Hello World"}`.
 
-## Understanding What Just Happened
+Open `http://127.0.0.1:8000/docs` — this is **Swagger UI**, auto-generated
+documentation. You can test your endpoints right from the browser.
 
-- `FastAPI()` creates the application instance. The `title` and `version` parameters are used in the auto-generated documentation.
-- `@app.get("/")` is a decorator that registers a GET endpoint at the root URL path.
-- `def read_root():` is the handler function that gets called when someone visits the root URL.
-- `item_id: int` tells FastAPI to expect an integer in the URL path and automatically convert/validate it.
-- `q: str = None` defines an optional query parameter. FastAPI will look for `?q=value` in the URL.
+---
 
-## Path Parameters and Query Parameters
+## Step 3: Path Parameters
 
-FastAPI makes it easy to work with both path parameters (embedded in the URL) and query parameters (appended after `?` in the URL):
+Add a path parameter endpoint. Values in `{curly braces}` are captured from the URL:
+
+```python
+@app.get("/items/{item_id}")
+def get_item(item_id: int):
+    return {"item_id": item_id}
+```
+
+Visit `http://127.0.0.1:8000/items/42` → `{"item_id": 42}`
+
+Try `http://127.0.0.1:8000/items/hello` — FastAPI returns an error because
+`item_id` expects an integer. This is **automatic type validation**.
+
+---
+
+## Step 4: Query Parameters
+
+Add a search endpoint with optional query parameters:
+
+```python
+@app.get("/search/")
+def search(q: str = "", page: int = 1):
+    return {"query": q, "page": page}
+```
+
+Test it:
+- `/search/?q=python&page=2` → `{"query": "python", "page": 2}`
+- `/search/` → `{"query": "", "page": 1}` (defaults used)
+
+---
+
+## Your `main.py` Now
 
 ```python
 from fastapi import FastAPI
 
-app = FastAPI()
+app = FastAPI(title="CRUD API", version="1.0")
 
-# Path parameter: /users/42
-@app.get("/users/{user_id}")
-def get_user(user_id: int):
-    return {"user_id": user_id}
 
-# Query parameters: /items/?skip=10&limit=5
-@app.get("/items/")
-def get_items(skip: int = 0, limit: int = 10):
-    return {"skip": skip, "limit": limit}
+@app.get("/")
+def home():
+    return {"message": "Hello World"}
 
-# Both path and query: /users/42/posts?published=true
-@app.get("/users/{user_id}/posts")
-def get_user_posts(user_id: int, published: bool = False):
-    return {"user_id": user_id, "published": published}
+
+@app.get("/items/{item_id}")
+def get_item(item_id: int):
+    return {"item_id": item_id}
+
+
+@app.get("/search/")
+def search(q: str = "", page: int = 1):
+    return {"query": q, "page": page}
 ```
+
+---
+
+## What You Learned
+
+- `@app.get()` registers a GET endpoint
+- Path parameters (`/items/{id}`) are captured from the URL
+- Type hints (`item_id: int`) give automatic validation
+- Query parameters (`q: str = ""`) are optional with defaults
+- `/docs` gives you interactive Swagger UI
+
+This `fastapi-crud/` project is ready. In **Chapter 3** we'll add POST, PUT, DELETE
+and build a complete CRUD API.

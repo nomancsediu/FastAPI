@@ -13,6 +13,6 @@ mlapi/
 |---------|------------------|
 | 5.1 | What model serialization means |
 | 5.2 | Pickle / Joblib with iris examples |
-| 5.3 | Input/output schemas for ML |
-| 5.4 | Building the iris classification API |
-| 5.5 | Batch predictions |
+| 5.5 | Input/output schemas for ML |
+| 5.6 | Building the iris classification API |
+| 5.7 | Batch predictions |

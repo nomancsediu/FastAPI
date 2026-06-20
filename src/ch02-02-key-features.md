@@ -14,7 +14,7 @@ FastAPI has first-class support for Python's `async` and `await` keywords, allow
 
 ## Dependency Injection
 
-FastAPI's dependency injection system allows you to define reusable components (like database connections, authentication checks, configuration values) and inject them into your endpoint functions. This promotes code reuse, makes testing easier (you can easily substitute mock dependencies), and keeps your endpoint functions clean and focused on their core logic. We will explore dependency injection in depth in the advanced concepts chapter.
+FastAPI's dependency injection system allows you to define reusable components (like database connections, authentication checks, configuration values) and inject them into your endpoint functions. This promotes code reuse, makes testing easier (you can easily substitute mock dependencies), and keeps your endpoint functions clean and focused on their core logic. We will explore dependency injection in depth in Chapter 3.
 
 ## High Performance
 

@@ -10,7 +10,7 @@ API keys are the simplest form of API authentication. The client includes a secr
 
 ## JWT (JSON Web Tokens)
 
-JWT is a stateless authentication mechanism that is widely used in modern APIs. A JWT is a self-contained token that contains three parts: a header (specifying the algorithm), a payload (containing user data and claims), and a signature (ensuring the token has not been tampered with). The server signs the token with a secret key, and the client includes it in the `Authorization` header as a `Bearer` token on every request. Since the token is self-contained, the server does not need to store session data, making JWT inherently scalable. We will implement a complete JWT authentication system in the advanced concepts chapter.
+JWT is a stateless authentication mechanism that is widely used in modern APIs. A JWT is a self-contained token that contains three parts: a header (specifying the algorithm), a payload (containing user data and claims), and a signature (ensuring the token has not been tampered with). The server signs the token with a secret key, and the client includes it in the `Authorization` header as a `Bearer` token on every request. Since the token is self-contained, the server does not need to store session data, making JWT inherently scalable. We will implement a complete JWT authentication system in Chapter 6.
 
 ```text
   Client              Server /login        User DB      Protected Endpoint

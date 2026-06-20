@@ -1,6 +1,7 @@
 # CRUD Operations
 
-CRUD stands for **C**reate, **R**ead, **U**pdate, **D**elete. These are the four basic operations for managing data. In REST APIs, they map to HTTP methods like this:
+CRUD stands for **C**reate, **R**ead, **U**pdate, **D**elete. In REST APIs, they
+map to HTTP methods like this:
 
 | Operation | HTTP Method | URL |
 |-----------|-------------|-----|
@@ -10,61 +11,16 @@ CRUD stands for **C**reate, **R**ead, **U**pdate, **D**elete. These are the four
 | Update | PUT | `/items/1` |
 | Delete | DELETE | `/items/1` |
 
-Instead of putting everything in one file, let's organize our code into separate files. Each file has one job — this makes the project easier to understand and maintain.
+From the previous section, your project already has Create and Read. Now we'll add
+Update and Delete.
 
-## Step 1: Create models.py
+---
 
-First, create a file for our data models:
+## Step 1: Add Update + Delete to `database.py`
 
-```python
-# models.py
-from pydantic import BaseModel
-
-
-class Item(BaseModel):
-    name: str
-    price: float
-
-
-class ItemUpdate(BaseModel):
-    name: str | None = None
-    price: float | None = None
-```
-
-`Item` is for creating. `ItemUpdate` is for updating (all fields optional).
-
-## Step 2: Create database.py
-
-Create a file for data storage:
+Open `fastapi-crud/database.py`. Add these two functions at the bottom:
 
 ```python
-# database.py
-from models import Item
-
-
-items = []
-next_id = 1
-
-
-def create_item(item: Item) -> dict:
-    global next_id
-    new_item = {"id": next_id, "name": item.name, "price": item.price}
-    items.append(new_item)
-    next_id += 1
-    return new_item
-
-
-def get_all_items() -> list:
-    return items
-
-
-def get_item(item_id: int) -> dict | None:
-    for item in items:
-        if item["id"] == item_id:
-            return item
-    return None
-
-
 def update_item(item_id: int, name=None, price=None) -> dict | None:
     item = get_item(item_id)
     if item is None:
@@ -84,45 +40,22 @@ def delete_item(item_id: int) -> bool:
     return False
 ```
 
-Each function does one thing. The `main.py` file will just call these functions.
+Now `database.py` has all five operations: create, get_all, get_one, update, delete.
 
-## Step 3: Create main.py
+---
 
-Now create the FastAPI app that uses models and database:
+## Step 2: Add PUT + DELETE Routes to `main.py`
+
+Open `fastapi-crud/main.py`. Add these imports at the top:
 
 ```python
-# main.py
-from fastapi import FastAPI, HTTPException
-from models import Item, ItemUpdate
-from database import (
-    create_item,
-    get_all_items,
-    get_item,
-    update_item,
-    delete_item,
-)
+from models import ItemUpdate
+from database import update_item, delete_item
+```
 
-app = FastAPI()
+Then add these routes at the bottom (before `@app.get("/search/")`):
 
-
-@app.post("/items/", status_code=201)
-def create(data: Item):
-    return create_item(data)
-
-
-@app.get("/items/")
-def list_all():
-    return get_all_items()
-
-
-@app.get("/items/{item_id}")
-def get_one(item_id: int):
-    item = get_item(item_id)
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return item
-
-
+```python
 @app.put("/items/{item_id}")
 def update_one(item_id: int, data: ItemUpdate):
     item = update_item(item_id, data.name, data.price)
@@ -138,30 +71,40 @@ def delete_one(item_id: int):
     return
 ```
 
-## Step 4: Run and Test
+You also need to add the import for `HTTPException`. Update the import line at the
+top of `main.py`:
+
+```python
+from fastapi import FastAPI, HTTPException
+```
+
+---
+
+## Step 3: Run and Test
 
 ```bash
 uvicorn main:app --reload
 ```
 
-Open `http://127.0.0.1:8000/docs` and test all 5 endpoints.
+Open `http://127.0.0.1:8000/docs` and test all 5 endpoints:
 
-## Why This Organization?
+1. **POST /items/** — create an item
+2. **GET /items/** — list all
+3. **GET /items/1** — get one
+4. **PUT /items/1** — update an item
+5. **DELETE /items/1** — delete an item
 
-| File | Job |
-|------|-----|
-| `models.py` | Defines what data looks like |
-| `database.py` | Stores and manages data |
-| `main.py` | Handles HTTP requests |
+---
 
-This is called **separation of concerns**. Each file has one clear job. When we upgrade to a real database in Chapter 4, we only need to change `database.py`.
-
-## What You Built
+## Your Complete Project Now
 
 ```
 fastapi-crud/
-├── main.py         # 5 endpoints
-├── models.py       # Pydantic models
-├── database.py     # In-memory storage
+├── main.py           # 5 endpoints (all CRUD)
+├── models.py         # Pydantic models (Item, ItemUpdate)
+├── database.py       # In-memory storage (5 functions)
 ├── requirements.txt
 ```
+
+Each file has one job. When we upgrade to a real database in Chapter 4, we only
+change `database.py` — `main.py` stays almost the same.
