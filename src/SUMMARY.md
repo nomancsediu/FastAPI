@@ -9,6 +9,8 @@
   - [API Lifecycle](ch01-06-api-lifecycle.md)
   - [Authentication & Authorization](ch01-07-auth-authorization.md)
 
+---
+
 - [Introduction to FastAPI](ch02-00-introduction-to-fastapi.md)
   - [About FastAPI](ch02-01-about-fastapi.md)
   - [Key Features](ch02-02-key-features.md)
