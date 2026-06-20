@@ -1,126 +1,167 @@
 # CRUD Operations
 
-## What is CRUD?
+CRUD stands for **C**reate, **R**ead, **U**pdate, **D**elete. These are the four basic operations for managing data. In REST APIs, they map to HTTP methods like this:
 
-CRUD stands for Create, Read, Update, Delete — the four basic operations for managing data in any application. RESTful APIs map these operations to HTTP methods: POST for Create, GET for Read, PUT/PATCH for Update, and DELETE for Delete. Building a complete CRUD API is a fundamental skill for any API developer.
+| Operation | HTTP Method | URL |
+|-----------|-------------|-----|
+| Create | POST | `/items/` |
+| Read all | GET | `/items/` |
+| Read one | GET | `/items/1` |
+| Update | PUT | `/items/1` |
+| Delete | DELETE | `/items/1` |
 
-```text
-  +---------------------+          +------------+
-  |  POST   /items/     +--Create->+            |
-  +---------------------+          |            |
-  +---------------------+          |            |
-  |  GET    /items/     +--Read---->  Database  |
-  +---------------------+          |            |
-  +---------------------+          |            |
-  |  GET    /items/{id} +--Read---->            |
-  +---------------------+          |            |
-  +---------------------+          |            |
-  |  PUT    /items/{id} +-Update-->+            |
-  +---------------------+          |            |
-  +---------------------+          |            |
-  |  DELETE /items/{id} +-Delete-->+            |
-  +---------------------+          +------------+
-```
+Instead of putting everything in one file, let's organize our code into separate files. Each file has one job — this makes the project easier to understand and maintain.
 
-## A Complete CRUD Example
+## Step 1: Create models.py
 
-Here is a complete CRUD API for managing items:
+First, create a file for our data models:
 
 ```python
-from fastapi import FastAPI, HTTPException, status
+# models.py
 from pydantic import BaseModel
-from typing import Optional
 
-app = FastAPI()
-
-# In-memory database (replace with a real database in production)
-db = []
 
 class Item(BaseModel):
     name: str
     price: float
-    description: Optional[str] = None
+
 
 class ItemUpdate(BaseModel):
-    name: Optional[str] = None
-    price: Optional[float] = None
-    description: Optional[str] = None
-
-# CREATE
-@app.post("/items/", status_code=status.HTTP_201_CREATED)
-def create_item(item: Item):
-    item_dict = item.model_dump()
-    item_dict["id"] = len(db) + 1
-    db.append(item_dict)
-    return item_dict
-
-# READ (all items)
-@app.get("/items/")
-def get_items(skip: int = 0, limit: int = 10):
-    return db[skip : skip + limit]
-
-# READ (single item)
-@app.get("/items/{item_id}")
-def get_item(item_id: int):
-    for item in db:
-        if item["id"] == item_id:
-            return item
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Item with id {item_id} not found"
-    )
-
-# UPDATE
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item_update: ItemUpdate):
-    for item in db:
-        if item["id"] == item_id:
-            update_data = item_update.model_dump(exclude_unset=True)
-            item.update(update_data)
-            return item
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Item with id {item_id} not found"
-    )
-
-# DELETE
-@app.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_item(item_id: int):
-    for i, item in enumerate(db):
-        if item["id"] == item_id:
-            db.pop(i)
-            return
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Item with id {item_id} not found"
-    )
+    name: str | None = None
+    price: float | None = None
 ```
 
-## Form Data and File Uploads
+`Item` is for creating. `ItemUpdate` is for updating (all fields optional).
 
-FastAPI also supports form data and file uploads, which are essential for many ML applications:
+## Step 2: Create database.py
+
+Create a file for data storage:
 
 ```python
-from fastapi import FastAPI, UploadFile, File, Form
+# database.py
+from models import Item
+
+
+items = []
+next_id = 1
+
+
+def create_item(item: Item) -> dict:
+    global next_id
+    new_item = {"id": next_id, "name": item.name, "price": item.price}
+    items.append(new_item)
+    next_id += 1
+    return new_item
+
+
+def get_all_items() -> list:
+    return items
+
+
+def get_item(item_id: int) -> dict | None:
+    for item in items:
+        if item["id"] == item_id:
+            return item
+    return None
+
+
+def update_item(item_id: int, name=None, price=None) -> dict | None:
+    item = get_item(item_id)
+    if item is None:
+        return None
+    if name is not None:
+        item["name"] = name
+    if price is not None:
+        item["price"] = price
+    return item
+
+
+def delete_item(item_id: int) -> bool:
+    for i, item in enumerate(items):
+        if item["id"] == item_id:
+            items.pop(i)
+            return True
+    return False
+```
+
+Each function does one thing. The `main.py` file will just call these functions.
+
+## Step 3: Create main.py
+
+Now create the FastAPI app that uses models and database:
+
+```python
+# main.py
+from fastapi import FastAPI, HTTPException
+from models import Item, ItemUpdate
+from database import (
+    create_item,
+    get_all_items,
+    get_item,
+    update_item,
+    delete_item,
+)
 
 app = FastAPI()
 
-@app.post("/upload/")
-async def upload_file(file: UploadFile = File(...)):
-    contents = await file.read()
-    return {
-        "filename": file.filename,
-        "content_type": file.content_type,
-        "size": len(contents)
-    }
 
-@app.post("/predict-image/")
-async def predict_image(
-    file: UploadFile = File(...),
-    model_name: str = Form(default="resnet50")
-):
-    image_bytes = await file.read()
-    prediction = "cat"
-    confidence = 0.95
-    return {"prediction": prediction, "confidence": confidence, "model": model_name}
+@app.post("/items/", status_code=201)
+def create(data: Item):
+    return create_item(data)
+
+
+@app.get("/items/")
+def list_all():
+    return get_all_items()
+
+
+@app.get("/items/{item_id}")
+def get_one(item_id: int):
+    item = get_item(item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item
+
+
+@app.put("/items/{item_id}")
+def update_one(item_id: int, data: ItemUpdate):
+    item = update_item(item_id, data.name, data.price)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item
+
+
+@app.delete("/items/{item_id}", status_code=204)
+def delete_one(item_id: int):
+    if not delete_item(item_id):
+        raise HTTPException(status_code=404, detail="Item not found")
+    return
+```
+
+## Step 4: Run and Test
+
+```bash
+uvicorn main:app --reload
+```
+
+Open `http://127.0.0.1:8000/docs` and test all 5 endpoints.
+
+## Why This Organization?
+
+| File | Job |
+|------|-----|
+| `models.py` | Defines what data looks like |
+| `database.py` | Stores and manages data |
+| `main.py` | Handles HTTP requests |
+
+This is called **separation of concerns**. Each file has one clear job. When we upgrade to a real database in Chapter 4, we only need to change `database.py`.
+
+## What You Built
+
+```
+fastapi-crud/
+├── main.py         # 5 endpoints
+├── models.py       # Pydantic models
+├── database.py     # In-memory storage
+├── requirements.txt
 ```

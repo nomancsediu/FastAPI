@@ -1,52 +1,88 @@
-# Types of Tests
+# Testing the CRUD API
 
-## Unit Tests
+Let's write tests for our `fastapi-crud/` project.
 
-Unit tests verify that individual functions and methods work correctly in isolation. For ML APIs, unit tests cover functions like data preprocessing, feature engineering, and output formatting:
+## Step 1: Install Test Tools
 
-```python
-# test_unit.py
-import pytest
-from schemas import PredictionInput, IrisInput
-
-def test_prediction_input_valid():
-    data = {"features": [5.1, 3.5, 1.4, 0.2], "model_name": "random_forest"}
-    parsed = PredictionInput(**data)
-    assert len(parsed.features) == 4
-
-def test_prediction_input_invalid_length():
-    with pytest.raises(Exception):
-        PredictionInput(features=[1.0, 2.0])
-
-def test_prediction_input_invalid_range():
-    with pytest.raises(Exception):
-        PredictionInput(features=[5.1, 3.5, 1.4, 100.0])
+```bash
+cd fastapi-crud
+pip install pytest httpx
 ```
 
-## Integration Tests
+## Step 2: Create a Test File
 
-Integration tests verify that multiple components work together correctly:
+```bash
+mkdir tests
+touch tests/__init__.py tests/test_api.py
+```
+
+## Step 3: Write Tests
 
 ```python
-# test_integration.py
+# tests/test_api.py
 from fastapi.testclient import TestClient
 from main import app
 
 client = TestClient(app)
 
-def test_predict_endpoint():
-    response = client.post("/predict", json={
-        "features": [5.1, 3.5, 1.4, 0.2]
-    })
-    assert response.status_code == 200
-    data = response.json()
-    assert "prediction" in data
-    assert "confidence" in data
-    assert 0.0 <= data["confidence"] <= 1.0
 
-def test_invalid_input():
-    response = client.post("/predict", json={
-        "features": [5.1, 3.5]
-    })
+def test_create_item():
+    response = client.post("/items/", json={"name": "Laptop", "price": 999})
+    assert response.status_code == 201
+    data = response.json()
+    assert data["name"] == "Laptop"
+    assert data["price"] == 999
+    assert "id" in data
+
+
+def test_list_items():
+    response = client.get("/items/")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+def test_get_item_not_found():
+    response = client.get("/items/999")
+    assert response.status_code == 404
+
+
+def test_update_item():
+    # Create first
+    created = client.post("/items/", json={"name": "Mouse", "price": 29}).json()
+    item_id = created["id"]
+
+    # Update
+    response = client.put(f"/items/{item_id}", json={"price": 35})
+    assert response.status_code == 200
+    assert response.json()["price"] == 35
+
+
+def test_delete_item():
+    created = client.post("/items/", json={"name": "Temp", "price": 10}).json()
+    response = client.delete(f"/items/{created['id']}")
+    assert response.status_code == 204
+
+
+def test_missing_required_field():
+    response = client.post("/items/", json={"name": "Test"})  # Missing price
     assert response.status_code == 422
 ```
+
+## Step 4: Run Tests
+
+```bash
+pytest tests/ -v
+```
+
+You'll see:
+
+```
+tests/test_api.py .......                                         [100%]
+```
+
+All green! Each test:
+1. Sends a real HTTP request to your API
+2. Checks the response status code
+3. Checks the response data
+
+`TestClient` works just like curl — no special setup needed.

@@ -1,93 +1,135 @@
 # JWT Authentication
 
-## How JWT Works
+JWT (JSON Web Token) lets users log in and get a token. They use that token to access protected endpoints.
 
-JSON Web Tokens (JWT) provide a stateless, scalable authentication mechanism for APIs. The flow works as follows: the client sends their credentials (username/password) to a `/login` endpoint. The server verifies the credentials and creates a JWT containing a payload (user ID, role, expiration time) signed with a secret key. The client stores this token and includes it in the `Authorization: Bearer <token>` header of every subsequent request. The server verifies the token's signature on each request and extracts the user information from the payload.
+## How It Works
 
-```text
-  Client            Server /login         User DB       Protected Endpoint
-    |                     |                  |                  |
-    +---POST /login------->                  |                  |
-    |   user + password   |                  |                  |
-    |                     +---verify creds-->|                  |
-    |                     |<--user found-----+                  |
-    |                     |                                     |
-    |                     +---create JWT (sign w/ SECRET_KEY)   |
-    |<--{access_token,----+                  |                  |
-    |    token_type}      |                  |                  |
-    |                                                           |
-    +---GET /predict (Authorization: Bearer <token>)---------->|
-    |                                        +--verify sig----->|
-    |                                        +--extract user--->|
-    |<--200 OK + data---------------------------------------------------+
+```
+1. User sends username + password → POST /login
+2. Server checks credentials, returns a token
+3. User sends token with every request → Authorization: Bearer <token>
+4. Server checks token, allows access
 ```
 
-## Implementation
+## Step 1: Install Dependencies
+
+```bash
+pip install "python-jose[cryptography]" passlib bcrypt
+```
+
+## Step 2: Create auth.py
 
 ```python
 from datetime import datetime, timedelta
-from typing import Optional
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
+from jose import jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel
+from config import SECRET_KEY
 
-SECRET_KEY = "your-secret-key-change-in-production"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-app = FastAPI()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+pwd_context = CryptContext(schemes=["bcrypt"])
 
-fake_users_db = {
-    "admin": {
-        "username": "admin",
-        "hashed_password": pwd_context.hash("admin123"),
-        "role": "admin"
-    }
-}
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+def verify_password(password: str, hashed: str) -> bool:
+    return pwd_context.verify(password, hashed)
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+def create_token(username: str) -> str:
+    data = {"sub": username, "exp": datetime.utcnow() + timedelta(hours=1)}
+    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid authentication credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+def decode_token(token: str) -> str | None:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    if username not in fake_users_db:
-        raise credentials_exception
-    return fake_users_db[username]
+        return payload.get("sub")
+    except:
+        return None
+```
 
-@app.post("/login", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = fake_users_db.get(form_data.username)
-    if not user or not pwd_context.verify(form_data.password, user["hashed_password"]):
-        raise HTTPException(status_code=401, detail="Incorrect username or password")
-    access_token = create_access_token(
-        data={"sub": user["username"]},
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+## Step 3: Add Users Table to models.py
 
-@app.get("/protected/")
-async def protected_route(current_user=Depends(get_current_user)):
-    return {"message": "This is a protected route", "user": current_user["username"]}
+Open `models.py` and add this at the bottom:
+
+```python
+from sqlalchemy import Column, Integer, String
+
+
+class UserDB(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+```
+
+Now `models.py` has two models: `ItemDB` (from Chapter 4) and `UserDB` (new).
+
+## Step 4: Add Auth Endpoints to main.py
+
+```python
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from database import get_db
+from models import UserDB
+from auth import hash_password, verify_password, create_token, decode_token
+
+oauth = OAuth2PasswordBearer(tokenUrl="login")
+
+@app.post("/register")
+def register(username: str, password: str, db: Session = Depends(get_db)):
+    existing = db.query(UserDB).filter(UserDB.username == username).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username taken")
+    user = UserDB(username=username, hashed_password=hash_password(password))
+    db.add(user)
+    db.commit()
+    return {"message": "User created"}
+
+@app.post("/login")
+def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(UserDB).filter(UserDB.username == form.username).first()
+    if not user or not verify_password(form.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Bad credentials")
+    token = create_token(user.username)
+    return {"access_token": token, "token_type": "bearer"}
+
+def get_current_user(token: str = Depends(oauth), db: Session = Depends(get_db)):
+    username = decode_token(token)
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user = db.query(UserDB).filter(UserDB.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
+```
+
+## Step 5: Protect Routes
+
+To protect a route, add `current_user = Depends(get_current_user)`:
+
+```python
+@app.get("/items/")
+def list_items(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return db.query(ItemDB).all()
+```
+
+Now only logged-in users can see items.
+
+## Test the Auth Flow
+
+```bash
+# Register
+curl -X POST "http://localhost:8000/register?username=alice&password=secret123"
+
+# Login (get token)
+curl -X POST "http://localhost:8000/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=alice&password=secret123"
+
+# Use token
+curl "http://localhost:8000/items/" \
+  -H "Authorization: Bearer <token>"
 ```

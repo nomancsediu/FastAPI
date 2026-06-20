@@ -1,57 +1,48 @@
-# Serialization with Pickle and Joblib
+# Pickle and Joblib
+
+Model serialization means saving a trained model to disk so you can load it later without retraining.
 
 ## Pickle
-
-Pickle is Python's built-in serialization module. It can serialize almost any Python object, including trained scikit-learn models, to a binary file:
 
 ```python
 import pickle
 from sklearn.linear_model import LogisticRegression
 from sklearn.datasets import load_iris
 
-# Train the model
 X, y = load_iris(return_X_y=True)
 model = LogisticRegression(max_iter=200)
 model.fit(X, y)
 
-# Serialize (save to disk)
+# Save
 with open("model.pkl", "wb") as f:
     pickle.dump(model, f)
 
-# Deserialize (load from disk)
+# Load
 with open("model.pkl", "rb") as f:
-    loaded_model = pickle.load(f)
+    loaded = pickle.load(f)
 
-# Make predictions
-predictions = loaded_model.predict(X[:3])
-print(predictions)
+print(loaded.predict(X[:3]))
 ```
 
-## Joblib
-
-Joblib is a library that is part of the scikit-learn ecosystem and is specifically optimized for serializing large NumPy arrays and scikit-learn models. It is generally more efficient than pickle for models that contain large numerical arrays:
+## Joblib (Better for sklearn)
 
 ```python
 import joblib
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import load_iris
 
-# Train the model
 X, y = load_iris(return_X_y=True)
-model = RandomForestClassifier(n_estimators=100)
+model = RandomForestClassifier()
 model.fit(X, y)
 
-# Serialize
 joblib.dump(model, "model.joblib")
 
-# Deserialize
-loaded_model = joblib.load("model.joblib")
-
-# Make predictions
-predictions = loaded_model.predict(X[:3])
-print(predictions)
+loaded = joblib.load("model.joblib")
+print(loaded.predict([[5.1, 3.5, 1.4, 0.2]]))
 ```
+
+Joblib is faster than pickle for NumPy arrays (which sklearn models use internally).
 
 ## Security Warning
 
-Both pickle and joblib can execute arbitrary code during deserialization. **Never load pickle files from untrusted sources.** Only load models that you or your trusted team have created. For production systems, consider additional security measures like model signing or using safer serialization formats like ONNX or SafeTensors.
+Never load pickle/joblib from untrusted sources. They can execute arbitrary code.

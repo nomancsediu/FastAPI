@@ -1,67 +1,56 @@
-# Debugging Techniques
+# Debugging Tips
 
-## Logging
+## 1. Read the Error Message
 
-Structured logging is the most important debugging tool for production APIs. Set up logging with different levels (DEBUG, INFO, WARNING, ERROR) and include contextual information in every log entry:
+When something breaks, the server terminal shows a **traceback**. Read the last line first — it tells you exactly what went wrong.
+
+## 2. Use Swagger UI
+
+`http://localhost:8000/docs` shows you exactly what each endpoint expects. If you get a 422 error, compare your request with the Swagger UI example.
+
+## 3. Use curl for Testing
+
+```bash
+# Test health
+curl http://localhost:8000/health
+
+# Test prediction
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"features": [5.1, 3.5, 1.4, 0.2]}'
+
+# Test with auth
+curl http://localhost:8000/items/ \
+  -H "Authorization: Bearer <token>"
+```
+
+## 4. Add Logging
 
 ```python
 import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("myapp")
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-@app.post("/predict/")
-def predict(input_data: IrisInput):
-    logger.info(f"Prediction request: features={input_data.features}")
-    try:
-        result = predict.predictor.predict(input_data.features)
-        logger.info(f"Prediction result: {result['prediction']} (confidence: {result['confidence']})")
-        return result
-    except Exception as e:
-        logger.error(f"Prediction failed: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Prediction failed")
+@app.post("/predict")
+def predict(data: InputData):
+    logger.info(f"Got request: {data.features}")
+    result = predictor.predict(data.features)
+    logger.info(f"Result: {result}")
+    return result
 ```
 
-## Global Exception Handler
+## 5. The 5-Minute Debug Workflow
 
-```python
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-import traceback
-
-app = FastAPI()
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled exception on {request.url}: {str(exc)}")
-    logger.error(traceback.format_exc())
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "An internal error occurred. Please try again later."}
-    )
 ```
+1. What status code?
+   ├── 4xx → Check what you're sending (Swagger UI helps)
+   └── 5xx → Check server terminal for traceback
 
-## Testing with cURL
+2. Can you reproduce with curl?
+   ├── Yes → Compare with working example
+   └── No → It's a frontend issue, not API
 
-cURL is an invaluable tool for debugging API endpoints from the command line:
-
-```bash
-# Basic GET request
-curl http://localhost:8000/health
-
-# POST with JSON body
-curl -X POST http://localhost:8000/predict   -H "Content-Type: application/json"   -d '{"features": [5.1, 3.5, 1.4, 0.2]}'
-
-# With authentication
-curl -X POST http://localhost:8000/predict   -H "Content-Type: application/json"   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9..."   -d '{"features": [5.1, 3.5, 1.4, 0.2]}'
-
-# Upload a file
-curl -X POST http://localhost:8000/predict-image   -F "file=@image.jpg"   -F "model_name=resnet50"
+3. Is the model loaded?
+   ├── Call GET /health to check
+   └── If not → Check model file path
 ```
-
-## Debugging Workflow
-
-When debugging an ML API issue, follow this systematic approach: first, check the logs for error messages and stack traces. Second, reproduce the issue with a minimal cURL command to isolate it from the front end. Third, verify the input data format matches what the model expects. Fourth, test the model prediction locally (outside the API) to confirm the model itself works. Fifth, check the API endpoint code for incorrect data transformation or response formatting. This systematic approach helps you quickly identify whether the issue is in the client, the API layer, the data pipeline, or the model itself.

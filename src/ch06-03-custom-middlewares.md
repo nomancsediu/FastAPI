@@ -1,51 +1,59 @@
-# Custom Middlewares
+# Environment Variables
 
-## Building a Custom Middleware
+Never write secrets (API keys, passwords) directly in your code. Use a `.env` file instead.
 
-You can create custom middleware for logging, timing, rate limiting, or any other cross-cutting concern:
+## Step 1: Create .env
 
-```python
-import time
-from fastapi import FastAPI, Request, Response
-
-app = FastAPI()
-
-@app.middleware("http")
-async def add_timing_header(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = (time.time() - start_time) * 1000
-    response.headers["X-Process-Time"] = f"{process_time:.2f}ms"
-    print(f"{request.method} {request.url.path} - {response.status_code} - {process_time:.2f}ms")
-    return response
+```bash
+echo "API_KEY=my-super-secret-key
+SECRET_KEY=jwt-secret-change-in-production
+DATABASE_URL=sqlite:///./items.db" > .env
 ```
 
-## Rate Limiting Middleware
+## Step 2: Read with python-dotenv
+
+```bash
+pip install python-dotenv
+```
 
 ```python
-from fastapi import FastAPI, Request, HTTPException
-from collections import defaultdict
-import time
+# config.py
+from dotenv import load_dotenv
+import os
 
-app = FastAPI()
+load_dotenv()
 
-request_counts = defaultdict(list)
-RATE_LIMIT = 100
-WINDOW_SECONDS = 60
+API_KEY = os.getenv("API_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY")
+DATABASE_URL = os.getenv("DATABASE_URL")
+```
 
-@app.middleware("http")
-async def rate_limiter(request: Request, call_next):
-    client_ip = request.client.host
-    now = time.time()
+## Step 3: Use in Code
 
-    request_counts[client_ip] = [
-        t for t in request_counts[client_ip] if now - t < WINDOW_SECONDS
-    ]
+```python
+# main.py
+from config import API_KEY, DATABASE_URL
 
-    if len(request_counts[client_ip]) >= RATE_LIMIT:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+# Use DATABASE_URL when creating database engine
+# Use API_KEY in your auth system
+```
 
-    request_counts[client_ip].append(now)
-    response = await call_next(request)
-    return response
+## Security Tips
+
+- Add `.env` to `.gitignore` (never commit secrets!)
+- Use different keys for development and production
+- Rotate keys periodically
+
+Your project should now look like:
+
+```
+fastapi-crud/
+├── main.py
+├── database.py
+├── models.py
+├── auth.py
+├── config.py          # NEW
+├── .env               # NEW (git-ignored)
+├── requirements.txt
+├── items.db
 ```

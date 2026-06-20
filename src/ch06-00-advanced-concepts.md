@@ -1,3 +1,11 @@
-# Advanced FastAPI Concepts
+# Making Your CRUD API Production-Ready
 
-This chapter covers advanced topics that are essential for building production-ready ML APIs: middlewares, dependency injection, JWT authentication, API key management, and best practices.
+Now we'll take our `fastapi-crud/` project and add real-world features. Every section modifies the `fastapi-crud/` project.
+
+| Section | Feature |
+|---------|---------|
+| 6.1 | **CORS** — Allow web browsers to call your API |
+| 6.2 | **API Key Auth** — Protect endpoints with a key |
+| 6.3 | **Environment Variables** — Store secrets in `.env` |
+| 6.5 | **JWT Authentication** — Login system for users |
+| 6.7 | **Best Practices** — Quick production tips |

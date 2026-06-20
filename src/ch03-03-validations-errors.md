@@ -1,94 +1,82 @@
-# Handling Validations and Errors
+# Validation and Error Handling
+
+FastAPI automatically checks that the data you receive is correct. If something is wrong, it returns a helpful error message.
 
 ## Built-in Validation
 
-FastAPI provides several layers of validation out of the box:
+Let's add some rules to our `Item` model:
 
 ```python
-from fastapi import FastAPI, Query, Path, HTTPException
-from pydantic import BaseModel, Field, constr
-from typing import Optional
+from pydantic import BaseModel, Field
 
-app = FastAPI()
+class Item(BaseModel):
+    name: str = Field(min_length=1, max_length=50)
+    price: float = Field(gt=0, le=10000)
+```
 
-class PredictionInput(BaseModel):
-    text: constr(min_length=1, max_length=1000)
-    model: str = Field(default="default-model", pattern=r"^[a-zA-Z0-9_-]+$")
-    temperature: float = Field(default=1.0, ge=0.0, le=2.0)
+Now if someone tries to create an item with `price=0` or `name=""`, FastAPI returns a **422 error** with a message explaining what's wrong.
 
-@app.post("/predict/")
-def predict(input_data: PredictionInput):
-    return {"result": "processed"}
+Try it:
+
+```bash
+curl -X POST http://localhost:8000/items/ \
+  -H "Content-Type: application/json" \
+  -d '{"name": "", "price": 0}'
+```
+
+You'll get back:
+
+```json
+{
+  "detail": [
+    {"loc": ["body", "name"], "msg": "ensure this value has at least 1 characters"},
+    {"loc": ["body", "price"], "msg": "ensure this value is greater than 0"}
+  ]
+}
+```
+
+FastAPI tells you exactly which fields failed and why.
+
+## Validating URL Parameters
+
+You can also validate path and query parameters:
+
+```python
+from fastapi import Path, Query
 
 @app.get("/items/{item_id}")
 def get_item(
-    item_id: int = Path(..., gt=0, description="Item ID must be positive"),
-    q: Optional[str] = Query(None, min_length=3, max_length=50),
-    page: int = Query(1, ge=1, description="Page number")
+    item_id: int = Path(gt=0),
+    q: str = Query(None, max_length=10)
 ):
-    return {"item_id": item_id, "q": q, "page": page}
+    return {"item_id": item_id, "q": q}
 ```
 
-## Custom Exception Handling
+- `item_id` must be greater than 0
+- `q` is optional, max 10 characters
 
-You can create custom exception handlers to return consistent error responses:
+## Custom Error Handling
+
+Sometimes you want a custom error. For example, when a model isn't loaded:
 
 ```python
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+class ModelNotLoaded(Exception):
+    pass
 
-app = FastAPI()
-
-class ModelNotLoadedError(Exception):
-    def __init__(self, model_name: str):
-        self.model_name = model_name
-
-@app.exception_handler(ModelNotLoadedError)
-async def model_not_loaded_handler(request: Request, exc: ModelNotLoadedError):
+@app.exception_handler(ModelNotLoaded)
+def handler(request, exc):
     return JSONResponse(
         status_code=503,
-        content={
-            "error": "ModelNotLoaded",
-            "message": f"Model '{exc.model_name}' is not loaded.",
-            "detail": "The ML model is currently being initialized."
-        }
+        content={"error": "Model is loading, try later"}
     )
-
-@app.get("/predict/{model_name}")
-def predict(model_name: str):
-    if model_name not in loaded_models:
-        raise ModelNotLoadedError(model_name)
-    return {"prediction": "result"}
 ```
 
-```text
-  +------------------+
-  |  Incoming        |
-  |  Request         |
-  +--------+---------+
-           |
-           v
-  +--------+---------+
-  |  Pydantic        |
-  |  Validation      |
-  +--------+---------+
-           |
-     +-----+-----+
-     |           |
-   Valid       Invalid
-     |           |
-     v           v
-  +------+   +------------------+
-  | Endp.|   | 422 Validation   |
-  | Handl|   | Error            |
-  +--+---+   +------------------+
-     |
-  +--+--+----------+
-  |     |          |
-  v     v          v
-+----+ +-------+ +----------------+
-| 2xx| | 404   | | 500 Global     |
-| OK | | Not   | | Exception      |
-|    | | Found | | Handler        |
-+----+ +-------+ +----------------+
-```
+## Summary
+
+- FastAPI validates data **automatically**
+- Use `Field(min_length=..., gt=...)` to add rules
+- Invalid data → **422 error** with helpful message
+- Use `HTTPException` for custom errors (like 404)
+- Use `@app.exception_handler()` for special error types
+
+You don't need to write if-statements to check data — FastAPI does it for you.

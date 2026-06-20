@@ -1,35 +1,35 @@
-# Importance of Testing APIs
+# Importance of Testing
 
-## Why Test ML APIs?
+## Why Testing Matters for ML APIs
 
-Testing ML APIs is arguably more important than testing regular web APIs because ML APIs have additional layers of complexity: model loading and serialization, input preprocessing, model inference, and output postprocessing. A bug in any of these layers can produce incorrect predictions that silently propagate to downstream systems and users. Unlike traditional software where a bug might cause a crash (which is immediately visible), a bug in an ML API might produce a wrong prediction with high confidence, which is much harder to detect and potentially much more harmful.
+ML APIs have failure modes that regular APIs don't:
 
-## What to Test
+| Failure Mode | What Happens | Detection |
+|-------------|-------------|-----------|
+| **Model not loaded** | All predictions fail with 500 | Easy (obvious crash) |
+| **Wrong input shape** | Garbage prediction, random output | Hard (looks valid) |
+| **Data drift** | Model accuracy degrades over time | Very hard (needs monitoring) |
+| **Feature encoding mismatch** | Wrong categories mapped | Silent failure |
+| **Security hole** | Unauthorized access to predictions | Critical risk |
 
-A comprehensive test suite for an ML API should cover: input validation (ensuring invalid inputs are rejected with clear error messages), model loading (ensuring the model loads correctly at startup), prediction correctness (ensuring the API returns the same predictions as the model does locally), edge cases (empty inputs, extremely large inputs, missing fields), authentication and authorization (ensuring protected endpoints reject unauthenticated requests), error handling (ensuring the API handles model failures gracefully), and performance (ensuring response times are acceptable under expected load).
+Without tests, these issues can go undetected. A comprehensive test suite catches them before they reach production.
 
-```text
-  +-----------------------------------------------------+
-  |                  Testing Hierarchy                   |
-  +-----------------------------------------------------+
-  |                                                     |
-  |                  +---------------+                  |
-  |                  |   E2E Tests   |  httpx/requests  |
-  |                  | Full Request  |  Realistic       |
-  |                  | to Response   |                  |
-  |                  +-------+-------+                  |
-  |                          |                          |
-  |                  +-------+-------+                  |
-  |                  | Integration   |  TestClient      |
-  |                  |    Tests      |  Component       |
-  |                  | API+DB+Model  |  Interaction     |
-  |                  +-------+-------+                  |
-  |                          |                          |
-  |                  +-------+-------+                  |
-  |                  |  Unit Tests   |  pytest          |
-  |                  | Functions &   |  Fast, Isolated  |
-  |                  |  Schemas      |                  |
-  |                  +---------------+                  |
-  |                                                     |
-  +-----------------------------------------------------+
-```
+## What We'll Test in Each Project
+
+### fastapi-crud/ Tests
+
+| Test Type | What It Covers | File |
+|-----------|---------------|------|
+| **Unit** | Pydantic schema validation | `test_schemas.py` |
+| **Unit** | CRUD database operations | `test_crud.py` |
+| **Integration** | All API endpoints | `test_main.py` |
+| **Integration** | Auth flow (register, login, protected routes) | `test_auth.py` |
+
+### ml-serving-api/ Tests
+
+| Test Type | What It Covers | File |
+|-----------|---------------|------|
+| **Unit** | Input/output schema validation | `test_schemas.py` |
+| **Unit** | Predictor logic with mocked model | `test_predict.py` |
+| **Integration** | Prediction endpoints | `test_main.py` |
+| **Batch** | Batch and CSV upload endpoints | `test_batch.py` |

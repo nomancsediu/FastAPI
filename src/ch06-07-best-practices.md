@@ -1,21 +1,62 @@
-# Best Practices
+# Best Practices — Quick Summary
 
-## Project Structure
+## Keep Secrets Out of Code
 
-Follow a clean, consistent project structure that separates concerns. Keep database models, Pydantic schemas, CRUD operations, and route definitions in separate files. Use `__init__.py` files to create clean import paths. Group related endpoints using FastAPI's `APIRouter` for modularity and maintainability.
+```bash
+# .env (add to .gitignore!)
+API_KEY=your-secret-key
+SECRET_KEY=another-secret
+```
 
-## Error Handling
+```python
+# config.py
+from dotenv import load_dotenv
+import os
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
+```
 
-Implement comprehensive error handling that returns consistent, informative error responses. Use HTTPException for known error conditions and custom exception handlers for application-specific errors. Never expose stack traces or internal details in production error responses. Always validate input data with Pydantic models and return 422 status codes for validation failures.
+## Use Status Codes Correctly
 
-## Logging
+| Situation | Status Code |
+|-----------|-------------|
+| Created successfully | `201` |
+| Deleted successfully | `204` |
+| Validation error | `422` |
+| Not found | `404` |
+| Unauthorized | `401` |
 
-Implement structured logging that captures essential information about each request: timestamp, HTTP method, URL path, status code, response time, and client IP. Use Python's standard `logging` module or a library like `structlog`. Configure different log levels for development (DEBUG) and production (INFO/WARNING). Send logs to a centralized logging system (like ELK stack or CloudWatch) in production.
+## Log Important Events
 
-## Security
+```python
+import logging
+logging.basicConfig(level=logging.INFO)
 
-Always use HTTPS in production. Validate and sanitize all input data. Use environment variables for secrets (never hardcode them). Implement rate limiting to prevent abuse. Keep dependencies updated. Use the principle of least privilege for database and API access. Rotate API keys and secrets periodically.
+@app.post("/items/")
+def create_item(item: Item, db: Session = Depends(get_db)):
+    logging.info(f"Creating item: {item.name}")
+    ...
+```
 
-## Performance
+## Small Tips
 
-Load ML models once at startup (not on every request). Use connection pooling for database connections. Implement caching for expensive or frequently requested predictions. Use async I/O for database queries and external API calls. Monitor response times and set up alerts for degradation. Consider horizontal scaling with multiple Uvicorn workers behind a load balancer for high-traffic APIs.
+- Run with `--reload` in development, NOT in production
+- Use `pip freeze > requirements.txt` to save exact versions
+- Test your API with Swagger UI (`/docs`) and curl
+- One file = one responsibility (database.py, models.py, auth.py, etc.)
+
+## Your Final Project
+
+```
+fastapi-crud/
+├── main.py           # FastAPI app + all routes
+├── database.py       # Database connection
+├── models.py         # Table definitions
+├── auth.py           # Authentication logic
+├── config.py         # Environment variables
+├── .env              # Secrets (git-ignored)
+├── requirements.txt
+├── items.db          # SQLite database
+```
+
+Now let's learn how to test everything.

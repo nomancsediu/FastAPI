@@ -2,8 +2,45 @@
 
 ## Why Databases in ML APIs?
 
-Databases serve several important purposes in ML APIs. They store prediction results for auditing and analysis, maintain model version information and metadata, manage user data for authentication, log API usage for billing and monitoring, and cache frequently requested predictions to reduce model load. Choosing the right database depends on your use case: PostgreSQL or MySQL for structured data, MongoDB for document-based storage, Redis for caching, and specialized vector databases (like Pinecone or Milvus) for embedding-based search.
+Databases serve several critical purposes in production ML APIs:
 
-## SQL vs NoSQL
+| Use Case | What We Store | Why |
+|----------|--------------|-----|
+| **Audit trail** | Input features, predictions, confidence, timestamp | Debug incorrect predictions, retrain with real data |
+| **Model versioning** | Model version used for each prediction | Reproduce results, A/B test between versions |
+| **User feedback** | User corrections to predictions | Improve model quality over time |
+| **Authentication** | API keys, user credentials | Secure the API |
 
-**SQL databases** (PostgreSQL, MySQL, SQLite) use structured tables with defined schemas. They provide strong consistency guarantees (ACID transactions), support complex queries with JOINs, and are ideal for applications where data relationships are well-defined. **NoSQL databases** (MongoDB, Cassandra, Redis) offer flexible schemas, horizontal scalability, and are optimized for specific access patterns. For most ML APIs, a SQL database like PostgreSQL is the right choice for storing structured metadata (users, predictions, model versions), while a NoSQL database or file storage system might be used for storing raw inputs and outputs.
+## Our Migration Path
+
+| Stage | Storage | Persistence | Chapter |
+|-------|---------|-------------|---------|
+| Start | In-memory list | Lost on restart | Ch 3 |
+| **Now** | **SQLite via SQLAlchemy** | **Persisted to file** | **Ch 4** |
+| Production | PostgreSQL | Full ACID | Your choice |
+
+## SQL vs NoSQL for ML APIs
+
+| Aspect | SQL (SQLite → PostgreSQL) | NoSQL (MongoDB) |
+|--------|---------------------------|-----------------|
+| **Schema** | Fixed columns, strong typing | Flexible documents |
+| **Consistency** | ACID guaranteed | Eventual consistency |
+| **Best for** | Prediction logs, user data, metadata | Raw feature storage, large blobs |
+| **Migration** | Start with SQLite, switch to PostgreSQL with 1 line change | Harder to migrate |
+
+We use **SQLite** here because it requires zero setup (no server, no installation). The SQLAlchemy code works identically with PostgreSQL — change one line in `database.py` when you deploy.
+
+## What is SQLAlchemy?
+
+SQLAlchemy is Python's most popular **Object-Relational Mapper (ORM)**. It lets you write Python classes instead of raw SQL:
+
+```python
+# Raw SQL — error-prone, hard to maintain
+cursor.execute("SELECT * FROM items WHERE id = ?", (item_id,))
+row = cursor.fetchone()
+
+# SQLAlchemy ORM — clean, type-safe
+item = db.query(Item).filter(Item.id == item_id).first()
+```
+
+The ORM translates Python method calls into SQL behind the scenes. You can switch from SQLite to PostgreSQL by changing the connection URL without touching any of your query code.
