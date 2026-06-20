@@ -1,18 +1,19 @@
-# Testing the CRUD API
+# Testing the API with Auth
 
-Let's write tests for our `fastapi-crud/` project.
+Now that our `/predict` and `/predict/batch` endpoints require an API key (from
+Chapter 6), our tests must include the `X-API-Key` header.
 
 ## Step 1: Install Test Tools
 
 ```bash
-cd fastapi-crud
+cd mlapi
 pip install pytest httpx
 ```
 
-## Step 2: Create a Test File
+## Step 2: Create the Test File
 
 ```bash
-mkdir tests
+mkdir -p tests
 touch tests/__init__.py tests/test_api.py
 ```
 
@@ -25,64 +26,152 @@ from main import app
 
 client = TestClient(app)
 
+API_KEY = "ml-inference-key-123"  # Must match your .env file
+```
 
-def test_create_item():
-    response = client.post("/items/", json={"name": "Laptop", "price": 999})
-    assert response.status_code == 201
+### Happy Path — With Valid API Key
+
+```python
+def test_predict_setosa():
+    """Known setosa features → species='setosa' with high confidence."""
+    response = client.post(
+        "/predict",
+        json={"features": [5.1, 3.5, 1.4, 0.2]},
+        headers={"X-API-Key": API_KEY},
+    )
+    assert response.status_code == 200
     data = response.json()
-    assert data["name"] == "Laptop"
-    assert data["price"] == 999
-    assert "id" in data
+    assert data["species"] == "setosa"
+    assert data["confidence"] > 0.9
 
 
-def test_list_items():
-    response = client.get("/items/")
+def test_predict_virginica():
+    """Known virginica features → species='virginica'."""
+    response = client.post(
+        "/predict",
+        json={"features": [6.3, 3.3, 6.0, 2.5]},
+        headers={"X-API-Key": API_KEY},
+    )
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
+    assert response.json()["species"] == "virginica"
 
 
-def test_get_item_not_found():
-    response = client.get("/items/999")
-    assert response.status_code == 404
-
-
-def test_update_item():
-    # Create first
-    created = client.post("/items/", json={"name": "Mouse", "price": 29}).json()
-    item_id = created["id"]
-
-    # Update
-    response = client.put(f"/items/{item_id}", json={"price": 35})
+def test_batch():
+    """Batch endpoint returns one prediction per sample."""
+    response = client.post(
+        "/predict/batch",
+        json={
+            "samples": [
+                [5.1, 3.5, 1.4, 0.2],
+                [6.3, 3.3, 6.0, 2.5],
+            ],
+        },
+        headers={"X-API-Key": API_KEY},
+    )
     assert response.status_code == 200
-    assert response.json()["price"] == 35
+    data = response.json()
+    assert data["count"] == 2
+    assert len(data["predictions"]) == 2
+```
+
+### Auth Tests — Wrong or Missing API Key
+
+```python
+def test_predict_without_api_key():
+    """No API key → 401."""
+    response = client.post(
+        "/predict",
+        json={"features": [5.1, 3.5, 1.4, 0.2]},
+    )
+    assert response.status_code == 401
 
 
-def test_delete_item():
-    created = client.post("/items/", json={"name": "Temp", "price": 10}).json()
-    response = client.delete(f"/items/{created['id']}")
-    assert response.status_code == 204
+def test_predict_with_wrong_api_key():
+    """Wrong API key → 401."""
+    response = client.post(
+        "/predict",
+        json={"features": [5.1, 3.5, 1.4, 0.2]},
+        headers={"X-API-Key": "wrong-key"},
+    )
+    assert response.status_code == 401
+```
 
+### Validation Tests — Bad Input
 
-def test_missing_required_field():
-    response = client.post("/items/", json={"name": "Test"})  # Missing price
+```python
+def test_wrong_number_of_features():
+    """4 features required. 3 features → 422."""
+    response = client.post(
+        "/predict",
+        json={"features": [1.0, 2.0, 3.0]},
+        headers={"X-API-Key": API_KEY},
+    )
     assert response.status_code == 422
+
+
+def test_empty_features():
+    """Empty list → 422."""
+    response = client.post(
+        "/predict",
+        json={"features": []},
+        headers={"X-API-Key": API_KEY},
+    )
+    assert response.status_code == 422
+
+
+def test_non_numeric_features():
+    """Strings instead of numbers → 422."""
+    response = client.post(
+        "/predict",
+        json={"features": ["a", "b", "c", "d"]},
+        headers={"X-API-Key": API_KEY},
+    )
+    assert response.status_code == 422
+```
+
+### Public Endpoints — No Auth Required
+
+```python
+def test_root():
+    """Root endpoint is public."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "message" in response.json()
+
+
+def test_health():
+    """Health check is public."""
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
 ```
 
 ## Step 4: Run Tests
 
 ```bash
-pytest tests/ -v
+pytest tests/test_api.py -v
 ```
 
-You'll see:
+Expected output:
 
 ```
-tests/test_api.py .......                                         [100%]
+tests/test_api.py ...........                                       [100%]
+11 passed in 0.85s
 ```
 
-All green! Each test:
-1. Sends a real HTTP request to your API
-2. Checks the response status code
-3. Checks the response data
+## What Each Test Covers
 
-`TestClient` works just like curl — no special setup needed.
+| Test | What It Protects Against |
+|------|-------------------------|
+| `test_predict_setosa` | API endpoint broken or schema changed |
+| `test_predict_virginica` | Model accuracy regression |
+| `test_batch` | Batch endpoint broken |
+| `test_predict_without_api_key` | Auth not enforced (security hole) |
+| `test_predict_with_wrong_api_key` | Auth bypass with wrong key |
+| `test_wrong_number_of_features` | Schema validation missing |
+| `test_empty_features` | Edge case — empty list crashes server |
+| `test_non_numeric_features` | Type validation broken |
+| `test_root` | Root endpoint broken |
+| `test_health` | Health check broken |
+
+`TestClient` works just like curl — no server needed, no special setup.

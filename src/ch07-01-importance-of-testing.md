@@ -12,24 +12,15 @@ ML APIs have failure modes that regular APIs don't:
 | **Feature encoding mismatch** | Wrong categories mapped | Silent failure |
 | **Security hole** | Unauthorized access to predictions | Critical risk |
 
-Without tests, these issues can go undetected. A comprehensive test suite catches them before they reach production.
+Without tests, these issues can go undetected. A comprehensive test suite catches
+them before they reach production.
 
-## What We'll Test in Each Project
-
-### fastapi-crud/ Tests
-
-| Test Type | What It Covers | File |
-|-----------|---------------|------|
-| **Unit** | Pydantic schema validation | `test_schemas.py` |
-| **Unit** | CRUD database operations | `test_crud.py` |
-| **Integration** | All API endpoints | `test_main.py` |
-| **Integration** | Auth flow (register, login, protected routes) | `test_auth.py` |
-
-### ml-serving-api/ Tests
+## What We'll Test
 
 | Test Type | What It Covers | File |
 |-----------|---------------|------|
-| **Unit** | Input/output schema validation | `test_schemas.py` |
-| **Unit** | Predictor logic with mocked model | `test_predict.py` |
-| **Integration** | Prediction endpoints | `test_main.py` |
-| **Batch** | Batch and CSV upload endpoints | `test_batch.py` |
+| **Unit** | Model prediction logic | `tests/test_model.py` |
+| **Integration** | All API endpoints (with auth) | `tests/test_api.py` |
+| **Auth** | API key validation, JWT register/login | `tests/test_api.py` |
+| **Validation** | Input schema — wrong features, types, missing fields | `tests/test_api.py` |
+| **Error handling** | 401 without auth, 422 bad input, 500 model crash | `tests/test_api.py` |

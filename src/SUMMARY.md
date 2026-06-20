@@ -43,18 +43,18 @@
 
 ---
 
-- [Production Ready CRUD](ch06-00-advanced-concepts.md)
-  - [CORS Middleware](ch06-01-middlewares.md)
-  - [API Key Auth](ch06-02-built-in-middlewares.md)
-  - [Environment Variables](ch06-03-custom-middlewares.md)
-  - [JWT Authentication](ch06-05-jwt-authentication.md)
-  - [Best Practices](ch06-07-best-practices.md)
+- [Production Ready ML API](ch06-00-advanced-concepts.md)
+  - [Environment Variables & Config](ch06-01-environment-variables.md)
+  - [CORS Middleware](ch06-02-cors-middleware.md)
+  - [API Key Authentication](ch06-03-api-key-auth.md)
+  - [JWT Authentication](ch06-04-jwt-authentication.md)
+  - [Best Practices](ch06-05-best-practices.md)
 
 ---
 
 - [Testing and Debugging](ch07-00-testing-debugging.md)
   - [Why Test?](ch07-01-importance-of-testing.md)
-  - [Testing the CRUD API](ch07-02-types-of-tests.md)
-  - [Testing the ML API](ch07-03-ml-model-mocking.md)
+  - [Testing the API with Auth](ch07-02-types-of-tests.md)
+  - [Testing the Model Directly](ch07-03-ml-model-mocking.md)
   - [Common Errors](ch07-04-common-api-errors.md)
   - [Debugging Tips](ch07-05-debugging-techniques.md)

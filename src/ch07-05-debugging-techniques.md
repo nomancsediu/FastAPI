@@ -2,40 +2,45 @@
 
 ## 1. Read the Error Message
 
-When something breaks, the server terminal shows a **traceback**. Read the last line first — it tells you exactly what went wrong.
+When something breaks, the server terminal shows a **traceback**. Read the last
+line first — it tells you exactly what went wrong.
 
 ## 2. Use Swagger UI
 
-`http://localhost:8000/docs` shows you exactly what each endpoint expects. If you get a 422 error, compare your request with the Swagger UI example.
+`http://localhost:8000/docs` shows you exactly what each endpoint expects. If you
+get a 422 error, compare your request with the Swagger UI example.
 
 ## 3. Use curl for Testing
 
 ```bash
-# Test health
+# Test health (public)
 curl http://localhost:8000/health
 
-# Test prediction
+# Test prediction (with API key)
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: ml-inference-key-123" \
   -d '{"features": [5.1, 3.5, 1.4, 0.2]}'
 
-# Test with auth
-curl http://localhost:8000/items/ \
-  -H "Authorization: Bearer <token>"
+# Test with JWT token
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"features": [5.1, 3.5, 1.4, 0.2]}'
 ```
 
-## 4. Add Logging
+## 4. Use Logging
 
 ```python
 import logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("myapp")
+logger = logging.getLogger("mlapi")
 
 @app.post("/predict")
-def predict(data: InputData):
-    logger.info(f"Got request: {data.features}")
-    result = predictor.predict(data.features)
-    logger.info(f"Result: {result}")
+def predict(data: IrisInput, api_key: str = Depends(verify_api_key)):
+    logger.info(f"Input: {data.features}")
+    result = classifier.predict(data.features)
+    logger.info(f"Output: {result}")
     return result
 ```
 
@@ -52,5 +57,5 @@ def predict(data: InputData):
 
 3. Is the model loaded?
    ├── Call GET /health to check
-   └── If not → Check model file path
+   └── If not → Check MODEL_PATH in .env
 ```
