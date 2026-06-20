@@ -16,7 +16,23 @@ Update and Delete.
 
 ---
 
-## Step 1: Add Update + Delete to `database.py`
+## Step 1: Add `ItemUpdate` to `models.py`
+
+The update endpoint needs a model where all fields are optional (the client only
+sends the fields they want to change). Open `fastapi-crud/models.py` and add this
+at the bottom:
+
+```python
+class ItemUpdate(BaseModel):
+    name: str | None = None
+    price: float | None = None
+```
+
+Now `models.py` has both `Item` (for create) and `ItemUpdate` (for update).
+
+---
+
+## Step 2: Add Update + Delete to `database.py`
 
 > **Python version note:** The `dict | None` syntax below requires Python 3.10+.
 > If you're on Python 3.9, use `Optional[dict]` instead (`from typing import Optional`).
@@ -47,7 +63,7 @@ Now `database.py` has all five operations: create, get_all, get_one, update, del
 
 ---
 
-## Step 2: Add PUT + DELETE Routes to `main.py`
+## Step 3: Add PUT + DELETE Routes to `main.py`
 
 Open `fastapi-crud/main.py`. Add these imports at the top:
 
@@ -83,7 +99,7 @@ from fastapi import FastAPI, HTTPException
 
 ---
 
-## Step 3: Run and Test
+## Step 4: Run and Test
 
 ```bash
 uvicorn main:app --reload
