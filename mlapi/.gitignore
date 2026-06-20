@@ -1,0 +1,6 @@
+.env
+users.db
+iris_model.joblib
+__pycache__/
+*.pyc
+.pytest_cache/

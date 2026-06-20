@@ -60,6 +60,8 @@ def get_item(
 Sometimes you want a custom error. For example, when a model isn't loaded:
 
 ```python
+from fastapi.responses import JSONResponse
+
 class ModelNotLoaded(Exception):
     pass
 

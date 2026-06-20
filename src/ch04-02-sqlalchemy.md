@@ -89,6 +89,11 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 
+@app.get("/")
+def home():
+    return {"message": "Hello World"}
+
+
 @app.post("/items/", status_code=201)
 def create(data: Item, db: Session = Depends(get_db)):
     item = ItemDB(name=data.name, price=data.price)
@@ -133,6 +138,11 @@ def delete_one(item_id: int, db: Session = Depends(get_db)):
     db.delete(item)
     db.commit()
     return
+
+
+@app.get("/search/")
+def search(q: str = "", page: int = 1):
+    return {"query": q, "page": page}
 ```
 
 ## What Changed?

@@ -8,6 +8,8 @@ Imagine your API needs to read a file or query a database before responding. Whi
 
 **Synchronous (slow):**
 ```python
+import time
+
 @app.get("/slow")
 def slow_endpoint():
     time.sleep(5)  # Server waits 5 seconds, can't do anything else
@@ -16,6 +18,8 @@ def slow_endpoint():
 
 **Asynchronous (fast):**
 ```python
+import asyncio
+
 @app.get("/fast")
 async def fast_endpoint():
     await asyncio.sleep(5)  # Server handles other requests while waiting
