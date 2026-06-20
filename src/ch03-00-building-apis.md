@@ -7,7 +7,7 @@ endpoints. Now we'll turn that into a fully functional CRUD API.
 
 From Chapter 2, your `fastapi-crud/` project looks like this:
 
-```
+```text
 fastapi-crud/
 ├── main.py           # GET /, GET /items/{id}, GET /search/
 ├── requirements.txt  # fastapi, uvicorn
@@ -27,7 +27,7 @@ fastapi-crud/
 
 By the end of this chapter:
 
-```
+```text
 fastapi-crud/
 ├── main.py           # 5 CRUD endpoints
 ├── models.py         # Pydantic schemas (Item, ItemUpdate)

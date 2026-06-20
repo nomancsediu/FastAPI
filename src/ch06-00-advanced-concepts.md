@@ -7,7 +7,7 @@ add real-world features every production ML API needs.
 
 Before we begin, this is what `mlapi/` looks like right now:
 
-```
+```text
 mlapi/
 ├── train.py              # Train iris model, saves iris_model.joblib
 ├── model.py              # IrisClassifier — load model, predict, predict_batch
@@ -38,7 +38,7 @@ know exactly which file to open and where to paste the code.
 
 After all five sections, your project will look like this:
 
-```
+```text
 mlapi/
 ├── train.py              # Train iris model
 ├── model.py              # IrisClassifier — reads model path from config

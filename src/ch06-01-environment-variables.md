@@ -98,7 +98,7 @@ curl http://localhost:8000/health
 
 ## Project Structure Now
 
-```
+```text
 mlapi/
 ├── train.py
 ├── model.py           # Updated — reads MODEL_PATH from config

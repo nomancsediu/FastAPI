@@ -27,7 +27,7 @@ def predict_batch(data: BatchInput):
 Compare sending 3 separate requests vs 1 batch request:
 
 **3 separate requests:**
-```
+```text
 → POST /predict  [5.1, 3.5, 1.4, 0.2]
 ← {"species": "setosa"}
 
@@ -41,7 +41,7 @@ Total: 3 HTTP connections, 3 model calls
 ```
 
 **1 batch request:**
-```
+```text
 → POST /predict/batch
   {"samples": [[5.1, 3.5, 1.4, 0.2],
                [6.3, 3.3, 6.0, 2.5],

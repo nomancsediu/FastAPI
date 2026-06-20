@@ -34,7 +34,7 @@ Every API interaction follows a request-response cycle. Here is what happens ste
 
 ## Anatomy of an API Request
 
-```
+```http
 POST /predict HTTP/1.1
 Host: api.example.com
 Content-Type: application/json
@@ -48,7 +48,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 
 ## Anatomy of an API Response
 
-```
+```http
 HTTP/1.1 200 OK
 Content-Type: application/json
 X-Response-Time: 45ms

@@ -16,3 +16,6 @@ mlapi/
 | 5.5 | Input/output schemas for ML |
 | 5.6 | Building the iris classification API |
 | 5.7 | Batch predictions |
+
+> Sections 5.3–5.4 are reserved for future content (Keras serialization,
+> model versioning). The numbering is kept stable so existing links don't break.

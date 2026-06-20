@@ -18,6 +18,9 @@ Update and Delete.
 
 ## Step 1: Add Update + Delete to `database.py`
 
+> **Python version note:** The `dict | None` syntax below requires Python 3.10+.
+> If you're on Python 3.9, use `Optional[dict]` instead (`from typing import Optional`).
+
 Open `fastapi-crud/database.py`. Add these two functions at the bottom:
 
 ```python

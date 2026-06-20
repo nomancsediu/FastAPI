@@ -36,7 +36,7 @@
 
 - [Machine Learning API](ch05-00-ml-integration.md)
   - [Model Serialization](ch05-01-model-serialization.md)
-  - [Pickle, Joblib, Keras](ch05-02-pickle-joblib.md)
+  - [Pickle and Joblib](ch05-02-pickle-joblib.md)
   - [Input and Output Schemas](ch05-05-input-output-schemas.md)
   - [Serving ML Models](ch05-06-serving-ml-models.md)
   - [Batch Predictions](ch05-07-batch-predictions.md)
@@ -58,3 +58,7 @@
   - [Testing the Model Directly](ch07-03-ml-model-mocking.md)
   - [Common Errors](ch07-04-common-api-errors.md)
   - [Debugging Tips](ch07-05-debugging-techniques.md)
+
+---
+
+- [Appendix: Reference Diagrams](diagrams.md)

@@ -506,7 +506,7 @@ tests/test_api.py ............                                         [100%]
 
 ## Data Flow Summary
 
-```
+```text
 Client                          Server
   │                               │
   │  POST /predict                │

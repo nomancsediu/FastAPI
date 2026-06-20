@@ -16,7 +16,7 @@ Before APIs became mainstream, most applications were built using a **monolithic
 
 The fundamental shift that APIs introduce is **decoupling**. Instead of the front end directly accessing the back end and database, an API sits as a middle layer:
 
-```
+```text
 [Front End]  -->  [API Layer]  -->  [Back End / Database]
 ```
 

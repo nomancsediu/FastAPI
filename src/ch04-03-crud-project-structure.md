@@ -15,7 +15,7 @@ The API endpoints are exactly the same. Only the storage changed.
 
 ## Your Project
 
-```
+```text
 fastapi-crud/
 ├── main.py          # Same 5 endpoints
 ├── database.py      # NEW — database connection

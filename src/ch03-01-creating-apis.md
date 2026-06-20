@@ -139,7 +139,7 @@ change `database.py` — `main.py` stays almost the same.
 
 ```
 fastapi-crud/
-├── main.py           # 4 endpoints (GET /, POST /items, GET /items, GET /items/{id}, GET /search/)
+├── main.py           # 5 endpoints (GET /, POST /items, GET /items, GET /items/{id}, GET /search/)
 ├── models.py         # NEW — Item Pydantic model
 ├── database.py       # NEW — in-memory storage functions
 ├── requirements.txt

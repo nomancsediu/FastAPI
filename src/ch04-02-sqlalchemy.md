@@ -1,6 +1,6 @@
 # Adding a Database with SQLAlchemy
 
-Right now our data disappears when the server restarts. Let's fix that by adding a database.
+Right now, our data disappears when the server restarts. Let's fix that by adding a database.
 
 ## Step 1: Install SQLAlchemy
 

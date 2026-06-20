@@ -44,13 +44,11 @@
   |     +-- Serving ML Models
   |     +-- Batch Predictions
   |
-  +-- Ch06: Advanced FastAPI
-  |     +-- Middlewares
-  |     +-- Built-in Middlewares
-  |     +-- Custom Middlewares
-  |     +-- Dependency Injection
+  +-- Ch06: Production Ready ML API
+  |     +-- Environment Variables & Config
+  |     +-- CORS Middleware
+  |     +-- API Key Authentication
   |     +-- JWT Authentication
-  |     +-- API Key Management
   |     +-- Best Practices
   |
   +-- Ch07: Testing & Debugging
